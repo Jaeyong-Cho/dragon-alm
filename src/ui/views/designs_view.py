@@ -22,17 +22,22 @@ class DesignsView(QWidget):
     def init_ui(self):
         """Initialize the UI"""
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(5)
 
         # Create splitter for table and preview
         splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter.setChildrenCollapsible(False)
 
         # Top section: Table
         table_widget = QWidget()
         table_layout = QVBoxLayout(table_widget)
         table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(5)
 
         # Toolbar
         toolbar = QHBoxLayout()
+        toolbar.setSpacing(5)
 
         self.add_button = QPushButton("Add Design")
         self.add_button.clicked.connect(self.add_design)
@@ -57,10 +62,37 @@ class DesignsView(QWidget):
         self.table.setHorizontalHeaderLabels([
             "ID", "Name", "Type", "Status", "Requirements", "Updated"
         ])
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+
+        # Configure column resize modes for responsiveness
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents
+        )  # ID
+        header.setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Stretch
+        )  # Name
+        header.setSectionResizeMode(
+            2, QHeaderView.ResizeMode.ResizeToContents
+        )  # Type
+        header.setSectionResizeMode(
+            3, QHeaderView.ResizeMode.ResizeToContents
+        )  # Status
+        header.setSectionResizeMode(
+            4, QHeaderView.ResizeMode.ResizeToContents
+        )  # Requirements
+        header.setSectionResizeMode(
+            5, QHeaderView.ResizeMode.ResizeToContents
+        )  # Updated
+
+        self.table.setSelectionBehavior(
+            QTableWidget.SelectionBehavior.SelectRows
+        )
+        self.table.setSelectionMode(
+            QTableWidget.SelectionMode.SingleSelection
+        )
+        self.table.setEditTriggers(
+            QTableWidget.EditTrigger.NoEditTriggers
+        )
         self.table.itemSelectionChanged.connect(self.on_selection_changed)
         self.table.doubleClicked.connect(self.edit_design)
         table_layout.addWidget(self.table)
@@ -70,14 +102,21 @@ class DesignsView(QWidget):
         # Bottom section: Preview
         preview_group = QGroupBox("Description Preview")
         preview_layout = QVBoxLayout(preview_group)
+        preview_layout.setContentsMargins(5, 5, 5, 5)
 
         self.preview = MarkdownViewer()
         preview_layout.addWidget(self.preview)
 
         splitter.addWidget(preview_group)
-        splitter.setSizes([400, 300])
+
+        # Set initial splitter sizes (60% table, 40% preview)
+        splitter.setStretchFactor(0, 6)
+        splitter.setStretchFactor(1, 4)
 
         layout.addWidget(splitter)
+
+        # Store splitter for potential resize handling
+        self.splitter = splitter
 
     def load_designs(self):
         """Load designs into the table"""
@@ -107,19 +146,37 @@ class DesignsView(QWidget):
             updated = design.updated_at.strftime("%Y-%m-%d %H:%M")
             self.table.setItem(row, 5, QTableWidgetItem(updated))
 
+        # Update preview for selected item
+        self.update_preview()
+
     def on_selection_changed(self):
         """Handle selection change"""
         has_selection = len(self.table.selectedItems()) > 0
         self.edit_button.setEnabled(has_selection)
         self.delete_button.setEnabled(has_selection)
+        self.update_preview()
+
+    def update_preview(self):
+        """Update the preview pane with selected design description"""
+        design = self.get_selected_design()
+        if design:
+            self.preview.set_markdown(design.description)
+        else:
+            self.preview.set_markdown("*Select a design to view details*")
 
     def get_selected_design(self):
         """Get the currently selected design"""
-        selected_rows = self.table.selectionModel().selectedRows()
+        selection_model = self.table.selectionModel()
+        if not selection_model:
+            return None
+        selected_rows = selection_model.selectedRows()
         if not selected_rows:
             return None
         row = selected_rows[0].row()
-        return self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        item = self.table.item(row, 0)
+        if not item:
+            return None
+        return item.data(Qt.ItemDataRole.UserRole)
 
     def add_design(self):
         """Add a new design"""
