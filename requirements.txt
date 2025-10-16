@@ -1,1 +1,4 @@
-PyQt6>=6.6.0
+PyQt6>=6.4.0
+markdown>=3.4.0
+Pygments>=2.14.0
+plantuml>=0.3.0

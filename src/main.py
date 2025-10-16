@@ -1,9 +1,14 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
 from repositories.sqlite_repository import SQLiteRequirementRepository
+from repositories.sqlite_design_repository import SQLiteDesignRepository
 from managers.requirement_manager import RequirementManager
+from managers.design_manager import DesignManager
 from controllers.requirement_controller import RequirementController
+from controllers.design_controller import DesignController
 from ui.views.requirements_view import RequirementsView
+from ui.views.designs_view import DesignsView
+
 
 class MainWindow(QMainWindow):
     """Main application window"""
@@ -15,19 +20,28 @@ class MainWindow(QMainWindow):
 
         # Initialize components
         db_path = "dragon_alm.db"
-        repository = SQLiteRequirementRepository(db_path)
-        manager = RequirementManager(repository)
-        controller = RequirementController(manager)
+
+        # Requirements
+        req_repository = SQLiteRequirementRepository(db_path)
+        req_manager = RequirementManager(req_repository)
+        req_controller = RequirementController(req_manager)
+
+        # Design
+        design_repository = SQLiteDesignRepository(db_path)
+        design_manager = DesignManager(design_repository)
+        design_controller = DesignController(design_manager)
 
         # Create tab widget
         tabs = QTabWidget()
 
-        # Create requirements view
-        requirements_view = RequirementsView(controller)
+        # Create views
+        requirements_view = RequirementsView(req_controller)
         tabs.addTab(requirements_view, "Requirements")
 
+        designs_view = DesignsView(design_controller, req_controller)
+        tabs.addTab(designs_view, "Design")
+
         # Add placeholder tabs
-        tabs.addTab(QTabWidget(), "Design")
         tabs.addTab(QTabWidget(), "Implementation")
         tabs.addTab(QTabWidget(), "Traceability")
 
