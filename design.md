@@ -618,9 +618,9 @@ salt
     {
       {
         {T
-          | ID | Title | Status | Priority | Category |
-          | REQ-001 | User Authentication | Approved | High | Security |
-          | REQ-002 | Data Persistence | Draft | Medium | Core |
+          | ID | Title | Status | Priority | Traces |
+          | REQ-001 | User Authentication | Approved | High | ✓ 2 Designs |
+          | REQ-002 | Data Persistence | Draft | Medium | ⚠ 0 Designs |
         }
       } | {
         <b>Details
@@ -637,20 +637,130 @@ salt
         Verification Criteria:
         { . }
         ---
-        Linked Items:
-        - DES-001: Authentication Module
-        - DES-002: Login UI
+        <b>Traceability
+        <b>Linked Designs (2):
+        ↓ DES-001: Authentication Module [Notes] [×]
+        ↓ DES-002: Login UI [Notes] [×]
+        [+ Add Design Link]
+
+        <b>Complete Trace Paths:
+        REQ-001 → DES-001 → IMP-001 (auth.py)
+        REQ-001 → DES-002 → IMP-003 (ui/login.py)
         ---
-        [Edit] [Delete] [Link] [Version History]
+        [Edit] [Delete] [Version History]
       }
     }
   }
-  [Status Bar: 125 Requirements | 87 Designs | 203 Implementations | DB: project.db]
+  [Status Bar: 125 Requirements | 87 Designs | 203 Implementations | Coverage: 78% | DB: project.db]
 }
 @enduml
 ```
 
-### 5.2 Traceability View
+### 5.2 Design View with Traceability
+
+```plantuml
+@startuml
+salt
+{+
+  {T+
+    + Requirements | Design | Implementation | Traceability | Settings
+    Design Tab
+    {
+      {
+        {T
+          | ID | Title | Status | Req ↔ Imp |
+          | DES-001 | Auth Module | Approved | ✓ 1 ↔ 2 |
+          | DES-002 | DB Schema | Draft | ✓ 1 ↔ 0 |
+        }
+      } | {
+        <b>Details
+        ---
+        ID: DES-001
+        Title: Authentication Module
+        Status: Approved
+        Author: Dev Team
+        ---
+        Description:
+        { . }
+        ---
+        <b>Traceability
+        <b>Backward Traces - Linked Requirements (1):
+        ↑ REQ-001: User Authentication [Notes] [×]
+        [+ Add Requirement Link]
+
+        <b>Forward Traces - Linked Implementations (2):
+        ↓ IMP-001: auth.py::authenticate() [Notes] [×]
+        ↓ IMP-002: auth.py::validate_token() [Notes] [×]
+        [+ Add Implementation Link]
+
+        <b>Complete Trace Paths:
+        REQ-001 → DES-001 → IMP-001
+        REQ-001 → DES-001 → IMP-002
+
+        <b>Coverage Status:
+        Requirements: ✓ Complete (1/1)
+        Implementations: ✓ Complete (2 linked)
+        ---
+        [Edit] [Delete] [Version History]
+      }
+    }
+  }
+}
+@enduml
+```
+
+### 5.3 Implementation View with Traceability
+
+```plantuml
+@startuml
+salt
+{+
+  {T+
+    + Requirements | Design | Implementation | Traceability | Settings
+    Implementation Tab
+    {
+      {
+        {T
+          | ID | File Path | Function | Status | Traces |
+          | IMP-001 | auth.py | authenticate() | Tested | ✓ Path |
+          | IMP-002 | db.py | connect() | In Progress | ⚠ No Design |
+        }
+      } | {
+        <b>Details
+        ---
+        ID: IMP-001
+        File: src/auth.py
+        Function: authenticate()
+        Status: Tested
+        Commit: abc123
+        ---
+        Description:
+        { . }
+        ---
+        <b>Traceability
+        <b>Backward Traces - Linked Designs (1):
+        ↑ DES-001: Authentication Module [Notes] [×]
+        [+ Add Design Link]
+
+        <b>Indirect Requirements (via designs):
+        ↑↑ REQ-001: User Authentication (via DES-001)
+
+        <b>Complete Trace Path:
+        REQ-001 → DES-001 → IMP-001
+
+        <b>Coverage Status:
+        Design Links: ✓ Complete (1/1 expected)
+        Requirement Traceability: ✓ Complete
+        ---
+        [Edit] [Delete] [Version History] [View Code]
+      }
+    }
+  }
+}
+@enduml
+```
+
+### 5.4 Traceability View (Global)
 
 ```plantuml
 @startuml
@@ -662,37 +772,130 @@ rectangle "Traceability View" {
     (Priority)
     (Date Range)
     (Entity Type)
+    (Coverage Filter)
   }
 
   rectangle "Visualization Panel" as viz {
-    rectangle "REQ-001\nAuthentication" as req1 #lightblue
-    rectangle "REQ-002\nData Layer" as req2 #lightblue
+    rectangle "REQ-001\nAuthentication\n✓ Complete" as req1 #lightblue
+    rectangle "REQ-002\nData Layer\n⚠ No Design" as req2 #lightyellow
 
-    rectangle "DES-001\nAuth Module" as des1 #lightgreen
-    rectangle "DES-002\nDB Schema" as des2 #lightgreen
+    rectangle "DES-001\nAuth Module\n✓ Complete" as des1 #lightgreen
+    rectangle "DES-002\nDB Schema\n⚠ No Impl" as des2 #lightyellow
 
-    rectangle "IMP-001\nauth.py" as imp1 #lightyellow
-    rectangle "IMP-002\ndb.py" as imp2 #lightyellow
+    rectangle "IMP-001\nauth.py\n✓ Complete" as imp1 #lightgreen
+    rectangle "IMP-002\ndb.py\n⚠ No Design" as imp2 #lightyellow
 
-    req1 --> des1
-    req2 --> des2
+    req1 --> des1 : "Trace note:\nCore feature"
+    req2 ..> des2 : "Missing\nlink"
     des1 --> imp1
-    des2 --> imp2
+    des2 ..> imp2 : "Missing\nlink"
   }
 
   rectangle "Statistics Panel" as stats {
+    <b>Coverage Statistics:
     - Total Requirements: 125
-    - Requirements with Design: 98 (78%)
-    - Designs with Implementation: 65 (75%)
-    - Orphaned Requirements: 27
-    - Orphaned Implementations: 15
+    - Requirements with Design: 98 (78%) ✓
+    - Designs with Implementation: 65 (75%) ✓
+    - Complete Trace Paths: 60 (48%)
+
+    <b>Issues:
+    - Orphaned Requirements: 27 ⚠
+    - Orphaned Designs: 12 ⚠
+    - Orphaned Implementations: 15 ⚠
+
+    [Export Matrix] [Show Gaps] [Fix Orphans]
+  }
+
+  rectangle "Actions Panel" as actions {
+    [Create Links] [Bulk Link] [Validate All]
   }
 }
 
 filter -down-> viz
 viz -down-> stats
+stats -down-> actions
 
 @enduml
+```
+
+### 5.5 Trace Link Dialog
+
+```plantuml
+@startuml
+salt
+{
+  <b>Create Trace Link
+  {
+    Source: | REQ-001: User Authentication
+    Target Type: | ^Design^
+    Available Targets:
+    {T
+      | ID | Title | Status |
+      | DES-001 | Auth Module | Approved |
+      | DES-002 | Login UI | Draft |
+      | DES-003 | Session Management | Draft |
+    }
+    Notes:
+    { . Core security feature implementation }
+    [Create Link] | [Cancel]
+  }
+}
+@enduml
+```
+
+### 5.6 Traceability Panel Component (Reusable)
+
+The traceability panel is a reusable component that appears in all artifact detail views:
+
+```python
+class TraceabilityPanel(QWidget):
+    """
+    Reusable traceability panel for artifact views.
+    Shows backward and forward traces with inline actions.
+    """
+    def __init__(self, artifact_type: str):
+        self.artifact_type = artifact_type  # 'requirement', 'design', 'implementation'
+        self.backward_section = TraceLinkSection("backward")
+        self.forward_section = TraceLinkSection("forward")
+        self.coverage_indicator = CoverageIndicator()
+        self.trace_path_view = TracePathView()
+
+    def display_traces(self, artifact_id: str):
+        """Display all traces for the given artifact"""
+        pass
+
+    def add_link_action(self, direction: str):
+        """Handle adding a new trace link"""
+        pass
+
+    def remove_link_action(self, link_id: str):
+        """Handle removing a trace link"""
+        pass
+
+    def navigate_to_linked_artifact(self, artifact_id: str):
+        """Navigate to the linked artifact"""
+        pass
+
+class TraceLinkSection(QWidget):
+    """
+    Section showing trace links in one direction.
+    Displays: icon, artifact_id, title, [notes] [×]
+    """
+    pass
+
+class CoverageIndicator(QWidget):
+    """
+    Visual indicator of traceability coverage.
+    Shows: ✓ Complete, ⚠ Partial, × Missing
+    """
+    pass
+
+class TracePathView(QWidget):
+    """
+    Displays complete trace paths.
+    Example: REQ-001 → DES-001 → IMP-001
+    """
+    pass
 ```
 
 ---
@@ -712,22 +915,364 @@ viz -down-> stats
   - Support for relationship metadata (notes, dates)
 - **Trade-off**: More tables but clearer semantics
 
-### 6.3 Version History
+### 6.3 In-View Traceability Display
+- **Strategy**: Embed traceability information directly in artifact detail panels
+- **Benefits**:
+  - Immediate visibility of relationships
+  - Reduced context switching
+  - Faster link management
+  - Better understanding of artifact context
+- **Implementation**: Reusable TraceabilityPanel component
+- **Performance**: Lazy loading of trace data when artifact is selected
+
+### 6.4 Trace Link Notes
+- **Purpose**: Provide context for why artifacts are linked
+- **Storage**: TEXT field in trace junction tables
+- **Display**: Inline with trace links, expandable for long notes
+- **Edit**: Quick edit action without modal dialog
+
+### 6.5 Coverage Indicators
+- **Visual Design**: Color-coded badges (green ✓, yellow ⚠, red ×)
+- **Levels**:
+  - ✓ Complete: All expected traces exist
+  - ⚠ Partial: Some traces exist but incomplete
+  - × Missing: No traces exist
+- **Display**: In table columns, detail panels, and statistics
+
+### 6.6 Version History
 - **Strategy**: Snapshot-based versioning with JSON serialization
 - **Triggers**: Manual tagging and automatic change detection
 - **Storage**: Compressed JSON in TEXT column
 - **Rationale**: Simple implementation, full history retention, easy restore
 
-### 6.4 Search and Filter
+### 6.7 Search and Filter
 - **Implementation**: In-memory filtering with SQLite FTS5 extension for full-text search
 - **Indexing**: Strategic indexes on frequently queried columns (status, dates, IDs)
 - **Performance**: Query optimization for 1000+ items
 
-### 6.5 Export Formats
+### 6.8 Export Formats
 - **CSV**: Simple tabular data for spreadsheet tools
 - **Markdown**: Documentation-friendly format with links
 - **JSON**: Full data export for backup and migration
 - **DOT/GraphML**: Graph visualization for traceability
+```
+
+```markdown path=/Users/jaeyong/workspace/dragon/dragon-alm/design.md start_line=325 end_line=440
+---
+
+## 4. Component Design
+
+### 4.1 Domain Models
+
+```plantuml
+@startuml
+!theme plain
+
+class Requirement {
+  - id: str
+  - title: str
+  - description: str
+  - status: RequirementStatus
+  - priority: Priority
+  - category: str
+  - parent_id: Optional[str]
+  - verification_criteria: str
+  - created_at: datetime
+  - updated_at: datetime
+  --
+  + validate(): bool
+  + get_children(): List[Requirement]
+  + get_linked_designs(): List[Design]
+  + get_trace_paths(): List[TracePath]
+  + get_coverage_status(): CoverageStatus
+  + to_dict(): dict
+  + from_dict(data: dict): Requirement
+}
+
+class Design {
+  - id: str
+  - title: str
+  - description: str
+  - status: DesignStatus
+  - author: str
+  - verification_criteria: str
+  - created_at: datetime
+  - updated_at: datetime
+  --
+  + validate(): bool
+  + get_linked_requirements(): List[Requirement]
+  + get_linked_implementations(): List[Implementation]
+  + get_trace_paths(): List[TracePath]
+  + get_coverage_status(): CoverageStatus
+  + to_dict(): dict
+  + from_dict(data: dict): Design
+}
+
+class Implementation {
+  - id: str
+  - file_path: str
+  - function_name: str
+  - description: str
+  - status: ImplementationStatus
+  - commit_id: str
+  - commit_message: str
+  - verification_criteria: str
+  - created_at: datetime
+  - updated_at: datetime
+  --
+  + validate(): bool
+  + get_linked_designs(): List[Design]
+  + get_indirect_requirements(): List[Requirement]
+  + get_trace_paths(): List[TracePath]
+  + get_coverage_status(): CoverageStatus
+  + to_dict(): dict
+  + from_dict(data: dict): Implementation
+}
+
+class TraceLink {
+  - source_id: str
+  - target_id: str
+  - link_type: LinkType
+  - notes: str
+  - created_at: datetime
+  --
+  + validate(): bool
+  + get_source_artifact(): Entity
+  + get_target_artifact(): Entity
+  + to_dict(): dict
+}
+
+class TracePath {
+  - requirement: Requirement
+  - design: Optional[Design]
+  - implementation: Optional[Implementation]
+  - is_complete: bool
+  --
+  + get_path_string(): str
+  + get_gaps(): List[str]
+}
+
+class CoverageStatus {
+  - has_forward_links: bool
+  - has_backward_links: bool
+  - complete_path_count: int
+  - status_level: CoverageLevel
+  --
+  + get_status_icon(): str
+  + get_status_color(): str
+}
+
+enum RequirementStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  IMPLEMENTED
+  OBSOLETE
+}
+
+enum DesignStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  IMPLEMENTED
+}
+
+enum ImplementationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  TESTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LinkType {
+  REQ_TO_DES
+  DES_TO_IMP
+}
+
+enum CoverageLevel {
+  COMPLETE
+  PARTIAL
+  MISSING
+}
+
+Requirement --> RequirementStatus
+Requirement --> Priority
+Requirement --> TracePath
+Requirement --> CoverageStatus
+Design --> DesignStatus
+Design --> TracePath
+Design --> CoverageStatus
+Implementation --> ImplementationStatus
+Implementation --> TracePath
+Implementation --> CoverageStatus
+TraceLink --> LinkType
+TracePath --> Requirement
+TracePath --> Design
+TracePath --> Implementation
+CoverageStatus --> CoverageLevel
+
+@enduml
+```
+
+### 4.2 Manager Classes
+
+```plantuml
+@startuml
+!theme plain
+
+interface IRepository {
+  + create(entity): str
+  + read(id: str): Entity
+  + update(entity): bool
+  + delete(id: str): bool
+  + find_all(): List[Entity]
+  + find_by_criteria(criteria): List[Entity]
+}
+
+class RequirementManager {
+  - repository: IRepository
+  - validation_service: ValidationService
+  - trace_service: TraceService
+  --
+  + create_requirement(data: dict): Requirement
+  + update_requirement(id: str, data: dict): Requirement
+  + delete_requirement(id: str): bool
+  + get_requirement(id: str): Requirement
+  + get_all_requirements(): List[Requirement]
+  + search_requirements(query: str): List[Requirement]
+  + get_children(parent_id: str): List[Requirement]
+  + get_linked_designs(req_id: str): List[Design]
+  + get_trace_paths(req_id: str): List[TracePath]
+  + get_coverage_status(req_id: str): CoverageStatus
+  + link_to_design(req_id: str, des_id: str, notes: str): bool
+  + unlink_from_design(req_id: str, des_id: str): bool
+  + update_trace_notes(req_id: str, des_id: str, notes: str): bool
+}
+
+class DesignManager {
+  - repository: IRepository
+  - validation_service: ValidationService
+  - trace_service: TraceService
+  --
+  + create_design(data: dict): Design
+  + update_design(id: str, data: dict): Design
+  + delete_design(id: str): bool
+  + get_design(id: str): Design
+  + get_all_designs(): List[Design]
+  + search_designs(query: str): List[Design]
+  + get_linked_requirements(des_id: str): List[Requirement]
+  + get_linked_implementations(des_id: str): List[Implementation]
+  + get_trace_paths(des_id: str): List[TracePath]
+  + get_coverage_status(des_id: str): CoverageStatus
+  + link_to_requirement(des_id: str, req_id: str, notes: str): bool
+  + link_to_implementation(des_id: str, imp_id: str, notes: str): bool
+  + unlink_from_requirement(des_id: str, req_id: str): bool
+  + unlink_from_implementation(des_id: str, imp_id: str): bool
+  + update_trace_notes(des_id: str, target_id: str, notes: str): bool
+}
+
+class ImplementationManager {
+  - repository: IRepository
+  - validation_service: ValidationService
+  - trace_service: TraceService
+  --
+  + create_implementation(data: dict): Implementation
+  + update_implementation(id: str, data: dict): Implementation
+  + delete_implementation(id: str): bool
+  + get_implementation(id: str): Implementation
+  + get_all_implementations(): List[Implementation]
+  + search_implementations(query: str): List[Implementation]
+  + get_linked_designs(imp_id: str): List[Design]
+  + get_indirect_requirements(imp_id: str): List[Requirement]
+  + get_trace_paths(imp_id: str): List[TracePath]
+  + get_coverage_status(imp_id: str): CoverageStatus
+  + link_to_design(imp_id: str, des_id: str, notes: str): bool
+  + unlink_from_design(imp_id: str, des_id: str): bool
+  + update_trace_notes(imp_id: str, des_id: str, notes: str): bool
+  + update_version_info(id: str, commit_id: str, message: str): bool
+}
+
+class TraceabilityManager {
+  - repository: IRepository
+  --
+  + get_trace_matrix(): TraceMatrix
+  + get_forward_trace(req_id: str): TraceResult
+  + get_backward_trace(imp_id: str): TraceResult
+  + get_trace_paths(artifact_id: str): List[TracePath]
+  + get_orphaned_items(): OrphanedItems
+  + calculate_coverage(): CoverageStatistics
+  + export_trace_matrix(format: str): str
+  + visualize_traces(): Graph
+}
+
+class TraceService {
+  - repository: IRepository
+  --
+  + get_linked_artifacts(artifact_id: str, direction: str): List[Entity]
+  + create_trace_link(source_id: str, target_id: str, notes: str): TraceLink
+  + delete_trace_link(source_id: str, target_id: str): bool
+  + update_trace_notes(source_id: str, target_id: str, notes: str): bool
+  + get_trace_link_details(source_id: str, target_id: str): TraceLink
+  + build_trace_paths(artifact_id: str): List[TracePath]
+  + calculate_coverage_status(artifact_id: str, artifact_type: str): CoverageStatus
+  + validate_trace_link(source_id: str, target_id: str): ValidationResult
+}
+
+class ValidationService {
+  + validate_requirement(req: Requirement): ValidationResult
+  + validate_design(des: Design): ValidationResult
+  + validate_implementation(imp: Implementation): ValidationResult
+  + validate_trace_link(link: TraceLink): ValidationResult
+}
+
+class SearchService {
+  + search_all(query: str): SearchResult
+  + search_by_type(type: str, query: str): List[Entity]
+  + filter_by_status(entities: List[Entity], status: str): List[Entity]
+  + filter_by_date_range(entities: List[Entity], start: date, end: date): List[Entity]
+  + filter_by_coverage(entities: List[Entity], level: CoverageLevel): List[Entity]
+}
+
+RequirementManager --> IRepository
+DesignManager --> IRepository
+ImplementationManager --> IRepository
+TraceabilityManager --> IRepository
+
+RequirementManager --> ValidationService
+DesignManager --> ValidationService
+ImplementationManager --> ValidationService
+
+RequirementManager --> TraceService
+DesignManager --> TraceService
+ImplementationManager --> TraceService
+
+RequirementManager --> SearchService
+DesignManager --> SearchService
+ImplementationManager --> SearchService
+
+@enduml
+```
+```
+
+These updates provide:
+
+1. **In-View Traceability**: Each artifact view (requirement, design, implementation) now displays its trace relationships directly in the detail panel
+2. **Bidirectional Navigation**: Users can see both forward and backward traces without leaving the current view
+3. **Quick Actions**: Add/remove trace links directly from artifact views
+4. **Coverage Indicators**: Visual status badges showing traceability completeness
+5. **Complete Trace Paths**: Shows the full requirement → design → implementation chain
+6. **Reusable Components**: TraceabilityPanel component can be embedded in all artifact views
+7. **Enhanced Domain Models**: Added methods for getting trace paths and coverage status
+8. **New TraceService**: Centralized service for trace link operations used across all managers
+
+The design maintains separation of concerns while providing rich traceability features directly in the context where users need them.
 
 ---
 
@@ -945,4 +1490,3 @@ class TraceError(ALMException):
 | Forward Trace | Navigation from requirements to implementation |
 | Backward Trace | Navigation from implementation to requirements |
 | Orphaned Item | Entity with no trace links |
-| Coverage | Percentage of items with trace links |
