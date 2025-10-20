@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from typing import List, Optional
 from controllers.requirement_controller import RequirementController
+from controllers.design_controller import DesignController
 from models.requirement import Requirement
 from ui.dialogs.requirement_dialog import RequirementDialog
 
@@ -15,16 +16,18 @@ class RequirementsView(QWidget):
 
     requirement_selected = pyqtSignal(str)  # Emits requirement ID
 
-    def __init__(self, controller: RequirementController, parent=None):
+    def __init__(self, controller: RequirementController, design_controller: Optional[DesignController] = None, parent=None):
         """
         Initialize view
 
         Args:
             controller: Requirement controller
+            design_controller: Design controller for linking
             parent: Parent widget
         """
         super().__init__(parent)
         self.controller = controller
+        self.design_controller = design_controller
         self.controller.add_observer(self.refresh_table)
 
         self._init_ui()
@@ -154,7 +157,12 @@ class RequirementsView(QWidget):
 
     def _on_new(self):
         """Handle new requirement button"""
-        dialog = RequirementDialog(self)
+        # Get available designs
+        available_designs = []
+        if self.design_controller:
+            available_designs = self.design_controller.get_all_designs()
+        
+        dialog = RequirementDialog(self, available_designs=available_designs)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             data = dialog.get_data()
             success, message, requirement = self.controller.create_requirement(data)
@@ -177,7 +185,12 @@ class RequirementsView(QWidget):
             QMessageBox.warning(self, "Error", f"Requirement {req_id} not found")
             return
 
-        dialog = RequirementDialog(self, requirement)
+        # Get available designs
+        available_designs = []
+        if self.design_controller:
+            available_designs = self.design_controller.get_all_designs()
+
+        dialog = RequirementDialog(self, requirement, available_designs)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             data = dialog.get_data()
             success, message, updated_req = self.controller.update_requirement(req_id, data)

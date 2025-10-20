@@ -58,6 +58,7 @@ class RequirementManager:
             category=data.get('category', ''),
             parent_id=data.get('parent_id'),
             verification_criteria=data.get('verification_criteria', ''),
+            design_ids=data.get('design_ids', []),
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
@@ -110,6 +111,8 @@ class RequirementManager:
             requirement.parent_id = data['parent_id']
         if 'verification_criteria' in data:
             requirement.verification_criteria = data['verification_criteria']
+        if 'design_ids' in data:
+            requirement.design_ids = data['design_ids']
 
         requirement.updated_at = datetime.now()
 

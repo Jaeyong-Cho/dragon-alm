@@ -15,6 +15,7 @@ class Requirement:
     category: str
     parent_id: Optional[str] = None
     verification_criteria: str = ""
+    design_ids: list = field(default_factory=list)  # Linked design IDs
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
@@ -41,6 +42,7 @@ class Requirement:
             'category': self.category,
             'parent_id': self.parent_id,
             'verification_criteria': self.verification_criteria,
+            'design_ids': self.design_ids,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
@@ -57,6 +59,7 @@ class Requirement:
             category=data.get('category', ''),
             parent_id=data.get('parent_id'),
             verification_criteria=data.get('verification_criteria', ''),
+            design_ids=data.get('design_ids', []),
             created_at=datetime.fromisoformat(data['created_at'])
                 if isinstance(data.get('created_at'), str)
                 else data.get('created_at', datetime.now()),

@@ -1,32 +1,38 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLineEdit, QTextEdit, QComboBox, QPushButton,
-    QLabel, QMessageBox
+    QLabel, QMessageBox, QListWidget, QListWidgetItem
 )
 from PyQt6.QtCore import Qt
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Set
 from models.requirement import Requirement
+from models.design import Design
 from models.enums import RequirementStatus, Priority
+from ui.dialogs.design_selector_dialog import DesignSelectorDialog
 
 
 class RequirementDialog(QDialog):
     """Dialog for creating/editing requirements"""
 
-    def __init__(self, parent=None, requirement: Optional[Requirement] = None):
+    def __init__(self, parent=None, requirement: Optional[Requirement] = None, 
+                 available_designs: Optional[List[Design]] = None):
         """
         Initialize dialog
 
         Args:
             parent: Parent widget
             requirement: Existing requirement for editing (None for create)
+            available_designs: List of available designs for linking
         """
         super().__init__(parent)
         self.requirement = requirement
         self.is_edit_mode = requirement is not None
+        self.available_designs = available_designs or []
+        self.selected_design_ids: Set[int] = set()
 
         self.setWindowTitle("Edit Requirement" if self.is_edit_mode else "Create Requirement")
         self.setMinimumWidth(600)
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(550)
 
         self._init_ui()
 
@@ -71,6 +77,24 @@ class RequirementDialog(QDialog):
         self.category_input.setPlaceholderText("Enter category (optional)")
         self.category_input.setMaxLength(50)
         form_layout.addRow("Category:", self.category_input)
+
+        # Design Trace field with button
+        design_trace_layout = QHBoxLayout()
+        self.design_trace_display = QListWidget()
+        self.design_trace_display.setMaximumHeight(80)
+        self.design_trace_display.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        
+        design_trace_button_layout = QVBoxLayout()
+        self.design_selector_button = QPushButton("→")
+        self.design_selector_button.setFixedWidth(40)
+        self.design_selector_button.setToolTip("Select designs to link")
+        self.design_selector_button.clicked.connect(self._open_design_selector)
+        design_trace_button_layout.addWidget(self.design_selector_button)
+        design_trace_button_layout.addStretch()
+        
+        design_trace_layout.addWidget(self.design_trace_display)
+        design_trace_layout.addLayout(design_trace_button_layout)
+        form_layout.addRow("Linked Designs:", design_trace_layout)
 
         # Description field
         self.description_input = QTextEdit()
@@ -117,6 +141,40 @@ class RequirementDialog(QDialog):
             self.category_input.setText(self.requirement.category)
             self.description_input.setPlainText(self.requirement.description)
             self.verification_input.setPlainText(self.requirement.verification_criteria)
+            
+            # Load linked designs if the requirement has design_ids
+            if hasattr(self.requirement, 'design_ids') and self.requirement.design_ids:
+                self.selected_design_ids = set(self.requirement.design_ids)
+                self._update_design_display()
+
+    def _open_design_selector(self):
+        """Open design selector dialog"""
+        dialog = DesignSelectorDialog(
+            self, 
+            self.available_designs, 
+            self.selected_design_ids
+        )
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.selected_design_ids = dialog.get_selected_design_ids()
+            self._update_design_display()
+
+    def _update_design_display(self):
+        """Update the design display list"""
+        self.design_trace_display.clear()
+        
+        # Find and display selected designs
+        selected_designs = [d for d in self.available_designs if d.id in self.selected_design_ids]
+        
+        for design in selected_designs:
+            item_text = f"{design.name} [{design.type}]"
+            item = QListWidgetItem(item_text)
+            self.design_trace_display.addItem(item)
+        
+        if not selected_designs:
+            item = QListWidgetItem("(No designs linked)")
+            item.setForeground(Qt.GlobalColor.gray)
+            self.design_trace_display.addItem(item)
 
     def _on_save(self):
         """Handle save button click"""
@@ -145,7 +203,8 @@ class RequirementDialog(QDialog):
             'status': self.status_combo.currentText(),
             'priority': self.priority_combo.currentText(),
             'category': self.category_input.text().strip(),
-            'verification_criteria': self.verification_input.toPlainText().strip()
+            'verification_criteria': self.verification_input.toPlainText().strip(),
+            'design_ids': list(self.selected_design_ids)
         }
 
         if self.id_input.text().strip():

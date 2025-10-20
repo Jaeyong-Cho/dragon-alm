@@ -44,6 +44,17 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                     )
                 ''')
 
+                # Create requirement-design link table
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS requirement_designs (
+                        requirement_id VARCHAR(20) NOT NULL,
+                        design_id INTEGER NOT NULL,
+                        PRIMARY KEY (requirement_id, design_id),
+                        FOREIGN KEY (requirement_id) REFERENCES requirements(id) ON DELETE CASCADE,
+                        FOREIGN KEY (design_id) REFERENCES designs(id) ON DELETE CASCADE
+                    )
+                ''')
+
                 # Create indexes
                 cursor.execute('''
                     CREATE INDEX IF NOT EXISTS idx_req_status
@@ -86,6 +97,14 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                     entity.created_at.isoformat(),
                     entity.updated_at.isoformat()
                 ))
+                
+                # Insert design links
+                if entity.design_ids:
+                    cursor.executemany('''
+                        INSERT INTO requirement_designs (requirement_id, design_id)
+                        VALUES (?, ?)
+                    ''', [(entity.id, design_id) for design_id in entity.design_ids])
+                
                 conn.commit()
                 return entity.id
         except sqlite3.IntegrityError as e:
@@ -107,7 +126,15 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                 if row is None:
                     return None
 
-                return self._row_to_requirement(row)
+                # Get linked design IDs
+                cursor.execute(
+                    'SELECT design_id FROM requirement_designs WHERE requirement_id = ?',
+                    (entity_id,)
+                )
+                design_rows = cursor.fetchall()
+                design_ids = [r['design_id'] for r in design_rows]
+
+                return self._row_to_requirement(row, design_ids)
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to read requirement: {str(e)}")
 
@@ -134,6 +161,15 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                     entity.updated_at.isoformat(),
                     entity.id
                 ))
+                
+                # Update design links
+                cursor.execute('DELETE FROM requirement_designs WHERE requirement_id = ?', (entity.id,))
+                if entity.design_ids:
+                    cursor.executemany('''
+                        INSERT INTO requirement_designs (requirement_id, design_id)
+                        VALUES (?, ?)
+                    ''', [(entity.id, design_id) for design_id in entity.design_ids])
+                
                 conn.commit()
                 return cursor.rowcount > 0
         except sqlite3.Error as e:
@@ -157,7 +193,19 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                 cursor = conn.cursor()
                 cursor.execute('SELECT * FROM requirements ORDER BY id')
                 rows = cursor.fetchall()
-                return [self._row_to_requirement(row) for row in rows]
+                
+                requirements = []
+                for row in rows:
+                    # Get linked design IDs for each requirement
+                    cursor.execute(
+                        'SELECT design_id FROM requirement_designs WHERE requirement_id = ?',
+                        (row['id'],)
+                    )
+                    design_rows = cursor.fetchall()
+                    design_ids = [r['design_id'] for r in design_rows]
+                    requirements.append(self._row_to_requirement(row, design_ids))
+                
+                return requirements
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to fetch requirements: {str(e)}")
 
@@ -181,11 +229,23 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
                 cursor = conn.cursor()
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
-                return [self._row_to_requirement(row) for row in rows]
+                
+                requirements = []
+                for row in rows:
+                    # Get linked design IDs for each requirement
+                    cursor.execute(
+                        'SELECT design_id FROM requirement_designs WHERE requirement_id = ?',
+                        (row['id'],)
+                    )
+                    design_rows = cursor.fetchall()
+                    design_ids = [r['design_id'] for r in design_rows]
+                    requirements.append(self._row_to_requirement(row, design_ids))
+                
+                return requirements
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to search requirements: {str(e)}")
 
-    def _row_to_requirement(self, row: sqlite3.Row) -> Requirement:
+    def _row_to_requirement(self, row: sqlite3.Row, design_ids: list = None) -> Requirement:
         """Convert database row to Requirement object"""
         return Requirement(
             id=row['id'],
@@ -196,6 +256,7 @@ class SQLiteRequirementRepository(IRepository[Requirement]):
             category=row['category'] or '',
             parent_id=row['parent_id'],
             verification_criteria=row['verification_criteria'] or '',
+            design_ids=design_ids or [],
             created_at=datetime.fromisoformat(row['created_at']),
             updated_at=datetime.fromisoformat(row['updated_at'])
         )

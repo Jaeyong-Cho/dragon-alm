@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         tabs = QTabWidget()
 
         # Create views
-        requirements_view = RequirementsView(req_controller)
+        requirements_view = RequirementsView(req_controller, design_controller)
         tabs.addTab(requirements_view, "Requirements")
 
         designs_view = DesignsView(design_controller, req_controller)
