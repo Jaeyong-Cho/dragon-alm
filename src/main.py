@@ -8,6 +8,7 @@ from controllers.requirement_controller import RequirementController
 from controllers.design_controller import DesignController
 from ui.views.requirements_view import RequirementsView
 from ui.views.designs_view import DesignsView
+from ui.views.toolbar import ToolBar
 
 
 class MainWindow(QMainWindow):
@@ -30,6 +31,11 @@ class MainWindow(QMainWindow):
         design_repository = SQLiteDesignRepository(db_path)
         design_manager = DesignManager(design_repository)
         design_controller = DesignController(design_manager)
+        
+        # Create Toolbar
+        toolbar = ToolBar(self)
+        
+        self.addToolBar(toolbar)
 
         # Create tab widget
         tabs = QTabWidget()
@@ -46,7 +52,6 @@ class MainWindow(QMainWindow):
         tabs.addTab(QTabWidget(), "Traceability")
 
         self.setCentralWidget(tabs)
-
 
 def main():
     app = QApplication(sys.argv)
