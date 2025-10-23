@@ -53,7 +53,7 @@ class RequirementsView(QWidget):
         toolbar.addStretch()
 
         # Action buttons
-        self.new_button = QPushButton("New Requirement")
+        self.new_button = QPushButton("New")
         self.new_button.clicked.connect(self._on_new)
         toolbar.addWidget(self.new_button)
 
