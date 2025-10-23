@@ -9,6 +9,7 @@ from controllers.design_controller import DesignController
 from ui.views.requirements_view import RequirementsView
 from ui.views.designs_view import DesignsView
 from ui.views.toolbar import ToolBar
+from ui.views.tabbar import TabBar
 
 
 class MainWindow(QMainWindow):
@@ -37,8 +38,9 @@ class MainWindow(QMainWindow):
         
         self.addToolBar(toolbar)
 
-        # Create tab widget
+        # Create tab widget with custom tab bar
         tabs = QTabWidget()
+        tabs.setTabBar(TabBar())
 
         # Create views
         requirements_view = RequirementsView(req_controller, design_controller)
