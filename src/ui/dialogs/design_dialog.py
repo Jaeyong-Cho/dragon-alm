@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QTextEdit, QComboBox, QPushButton,
     QFormLayout, QListWidget, QAbstractItemView,
-    QTabWidget, QSplitter
+    QTabWidget, QSplitter, QWidget
 )
 from PyQt6.QtCore import Qt
 from typing import Optional, List
@@ -72,15 +72,25 @@ class DesignDialog(QDialog):
             "- PlantUML: ```plantuml ... ```\n"
             "- Tables, links, images, etc."
         )
-        self.description_edit.textChanged.connect(self._update_preview)
         editor_widget.addTab(self.description_edit, "Edit")
 
         splitter.addWidget(editor_widget)
 
         # Preview side
-        preview_widget = QTabWidget()
+        preview_container = QWidget()
+        preview_layout = QVBoxLayout(preview_container)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Refresh button
+        refresh_button = QPushButton("Refresh Preview")
+        refresh_button.clicked.connect(self._update_preview)
+        preview_layout.addWidget(refresh_button)
+        
         self.markdown_preview = MarkdownViewer()
-        preview_widget.addTab(self.markdown_preview, "Preview")
+        preview_layout.addWidget(self.markdown_preview)
+        
+        preview_widget = QTabWidget()
+        preview_widget.addTab(preview_container, "Preview")
 
         splitter.addWidget(preview_widget)
         splitter.setSizes([400, 400])
