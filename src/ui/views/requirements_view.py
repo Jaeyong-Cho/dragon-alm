@@ -33,11 +33,7 @@ class RequirementsView(QWidget):
         self._init_ui()
         self.refresh_table()
 
-    def _init_ui(self):
-        """Initialize UI components"""
-        layout = QVBoxLayout(self)
-
-        # Toolbar
+    def _init_toolbar(self):
         toolbar = QHBoxLayout()
 
         # Search box
@@ -67,9 +63,10 @@ class RequirementsView(QWidget):
         self.delete_button.setEnabled(False)
         toolbar.addWidget(self.delete_button)
 
-        layout.addLayout(toolbar)
+        return toolbar
 
-        # Table
+    def _init_table(self):
+        """Initialize the requirements table"""
         self.table = QTableWidget()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels([
@@ -95,7 +92,38 @@ class RequirementsView(QWidget):
         self.table.itemSelectionChanged.connect(self._on_selection_changed)
         self.table.itemDoubleClicked.connect(self._on_edit)
 
+    def _init_navigator(self):
+        self.navigator = QWidget()
+
+    def _init_property_view(self):
+        self.property_view = QWidget()
+
+    def _init_contents_view(self):
+        self.contents_view = QWidget()
+
+    def _init_main_view(self):
+        self.main_view = QHBoxLayout()
+
+        self._init_navigator()
+        self._init_contents_view()
+        self._init_property_view()
+
+        self.main_view.addWidget(self.navigator, 1)
+        self.main_view.addWidget(self.contents_view, 3)
+        self.main_view.addWidget(self.property_view, 1)
+
+    def _init_ui(self):
+        """Initialize UI components"""
+        layout = QVBoxLayout(self)
+
+        toolbar = self._init_toolbar()
+        layout.addLayout(toolbar)
+
+        self._init_table()
         layout.addWidget(self.table)
+
+        # self._init_main_view()
+        # layout.addLayout(self.main_view)
 
         # Status bar
         self.status_label = QLabel("0 requirements")
